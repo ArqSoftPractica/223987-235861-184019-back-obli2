@@ -21,4 +21,12 @@ module.exports = class ProductSubscriptionRepository {
         
         return productSubscription
     }
+
+    async getProductSubscription(productId, userId) {
+        const productSubscription = await ProductSubscription.findOne({where:{
+            productId: productId,
+            userId: userId
+        }});
+        return productSubscription
+    }
 }

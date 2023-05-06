@@ -91,6 +91,22 @@ module.exports = class productController {
         }
     }
 
+    async getIfSuscribedToProduct(req, res, next) {
+        try {
+            const productId = req.params.id;
+            const userId = req.user.id;
+            const productSubscription = await this.productSubscriptionRepository.getProductSubscription(productId, userId);
+            if (productSubscription) {
+                res.status(204);
+                return res.json();
+            } else {
+                return next(new RestError("No subscription found", 404));
+            }
+        } catch (err) {
+            this.handleRepoError(err, next)
+        }
+    }
+
     async unSubscribeUserToProduct(req, res, next) {
         try {
             const productId = req.params.id;

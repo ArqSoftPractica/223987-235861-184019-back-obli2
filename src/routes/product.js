@@ -16,5 +16,6 @@ Router.put('/products/:id', verifyToken, verifyPermission(), (req, res, next) =>
 
 Router.post('/products/subscribe/:id', verifyToken, verifyPermission(), (req, res, next) => productController.subscribeUserToProduct(req, res, next));
 Router.delete('/products/subscribe/:id', verifyToken, verifyPermission(), (req, res, next) => productController.unSubscribeUserToProduct(req, res, next));
+Router.get('/products/subscribe/:id', verifyToken, verifyPermission(), (req, res, next) => productController.getIfSuscribedToProduct(req, res, next));
 
 module.exports = Router
