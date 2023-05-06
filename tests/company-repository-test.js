@@ -5,15 +5,6 @@ const expect = chai.expect;
 const CompanyRepository = require("../src/repositories/company-repository");
 const db = require('../src/db/connection/connection');
 
-const stubValueUnHashedPassword = 'testPassword1*'
-const stubHashedPassword = "c67100c65e3ab96647156d991a6790ed6fd7d47c2585d0f7441ecf5931a66931"
-
-const companyStub = {
-    id: crypto.randomUUID(),
-    name:"NOT STORING IN MYSQL SHIZZLE",
-    apiKey:"apiKey",
-};
-
 describe("UserRepository", function() {
     let sequelizeStubCreate;
     let sequelizeStubGetAll;
@@ -21,8 +12,14 @@ describe("UserRepository", function() {
     let sequelizeStubDelete;
     let sandbox;
     let companyRepository;
+    let companyStub;
     
     beforeEach(function () {
+        companyStub = {
+            id: crypto.randomUUID(),
+            name: crypto.randomBytes(4).toString('hex'),
+            apiKey: crypto.randomUUID(),
+        };
         sandbox = sinon.createSandbox();
         sequelizeStubCreate = sandbox.stub(db.company, 'create');
         sequelizeStubGetAll = sandbox.stub(db.company, 'findAll');

@@ -13,25 +13,6 @@ const RestError = require('../src/controllers/rest-error')
 const stubValueUnHashedPassword = 'testPassword1*'
 const stubHashedPassword = "c67100c65e3ab96647156d991a6790ed6fd7d47c2585d0f7441ecf5931a66931"
 
-const companyValue = {
-    id: crypto.randomUUID(),
-    name: "Company Name",
-    apiKey: "apiKey",
-};
-
-const stubValue = {
-    id: crypto.randomUUID(),
-    userName: "username",
-    email: "thisIsATestEmail@email.com",
-    companyId: companyValue.id,
-    password: crypto.randomUUID(),
-    role: constants.roles.admin,
-    password: stubHashedPassword,
-    createdAt:new Date(),
-    updatedAt:new Date(),
-};
-
-
 describe("Create User - Register an admin", function() {
     let sandbox;
     let next;
@@ -39,8 +20,31 @@ describe("Create User - Register an admin", function() {
     let userRepository;
     let companyRepository;
     let getCompanyStub, createStub, createCompanyStub, deleteCompanyStub;
+    let companyValue;
+    let stubValue;
+    let unhashedApiKey = "adb147c5-691c-4269-babe-0b6c8a963682";
     
     beforeEach(function () {
+        companyValue = {
+            id: crypto.randomUUID(),
+            name: crypto.randomBytes(4).toString('hex'),
+            apiKey: unhashedApiKey,
+        };
+
+        stubValue = {
+            id: crypto.randomUUID(),
+            name: crypto.randomBytes(4).toString('hex'),
+            username: crypto.randomBytes(4).toString('hex'),
+            userName: crypto.randomBytes(4).toString('hex'),
+            email: `${crypto.randomBytes(4).toString('hex')}@${crypto.randomBytes(4).toString('hex')}.com`,
+            password: stubHashedPassword,
+            companyId: companyValue.id,
+            companyName: companyValue.name,
+            companyApiKey: unhashedApiKey,
+            role: constants.roles.admin,
+            createdAt:new Date(),
+            updatedAt:new Date(),
+        };
         req = { body: {} };
         res = { json: sinon.stub() };
         next = sinon.stub();
@@ -96,17 +100,15 @@ describe("Create User - Register an admin", function() {
         await userController.createUser(req, res, next);
         expect(createStub.calledOnce).to.be.true;
         expect(res.json.calledOnce).to.be.true;
-        expect(res.json.args[0][0]).to.deep.equal({
-            id: stubValue.id,
-            userName: stubValue.userName,
-            password: stubHashedPassword,
-            email: stubValue.email,
-            companyId: companyValue.id,
-            role: constants.roles.admin,
-            updatedAt: stubValue.updatedAt,
-            createdAt: stubValue.createdAt,
-            companyApiKey: companyValue.apiKey
-        });
+        expect(res.json.args[0][0].id).to.deep.equal(stubValue.id);
+        expect(res.json.args[0][0].userName).equal(stubValue.userName);
+        expect(res.json.args[0][0].password).equal(stubHashedPassword);
+        expect(res.json.args[0][0].email).equal(stubValue.email);
+        expect(res.json.args[0][0].companyId).equal(companyValue.id);
+        expect(res.json.args[0][0].role).equal(constants.roles.admin);
+        expect(res.json.args[0][0].updatedAt).equal(stubValue.updatedAt);
+        expect(res.json.args[0][0].createdAt).equal(stubValue.createdAt);
+        expect(res.json.args[0][0].apiKey).to.not.equal(companyValue.apiKey);
     });
 
     it('should handle repository errors and return an appropriate response', async () => {
