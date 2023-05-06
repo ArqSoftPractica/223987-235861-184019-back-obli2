@@ -17,6 +17,7 @@ const purchase = require('./src/routes/purchase');
 const health = require('./src/routes/health');
 
 var salesReportQueue = require("./src/service/sales-bull-queue-service");
+var productEventNotification = require("./src/service/product-event-notification");
 
 var logger = require("./src/logger/systemLogger")
 
@@ -56,6 +57,10 @@ const server = app.listen(process.env.PORT ?? 3000, function(){
 
 (async() => {
   await salesReportQueue.initSalesReportQueue();
+})();
+
+(async() => {
+  await productEventNotification.initProductEventNotification();
 })();
 
 module.exports = server;
