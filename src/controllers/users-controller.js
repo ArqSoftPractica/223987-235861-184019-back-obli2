@@ -274,7 +274,7 @@ module.exports = class UsersController {
                     role: userCreated.role,
                     updatedAt: userCreated.updatedAt,
                     createdAt: userCreated.createdAt,
-                    companyApiKey: company.apiKey
+                    companyApiKey: apiKey
                 });
             } catch (err) {
                 await this.companyRepository.deleteCompany(companyName, apiKey);

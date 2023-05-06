@@ -1,6 +1,5 @@
 require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
 const Sequelize = require("sequelize");
-const SequelizeMock = require("sequelize-mock");
 const { DataTypes } = require('sequelize');
 const dbUri = process.env.MY_SQL_URI || "localhost";
 const dbPassword = process.env.DB_PASSWORD;
@@ -17,11 +16,7 @@ const logger = require('../../logger/systemLogger')
 
 let sequelize;
 if(process.env.NODE_ENV === 'test') {
-  sequelize = new Sequelize({
-    dialect: 'sqlite',
-    storage: ':memory:',
-    logging: false,
-  });
+  sequelize = new Sequelize('sqlite::memory:');
   sequelize.sync()
 } else {
   sequelize = new Sequelize(

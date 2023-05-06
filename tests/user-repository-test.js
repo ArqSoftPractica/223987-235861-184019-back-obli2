@@ -9,26 +9,34 @@ const db = require('../src/db/connection/connection');
 
 const stubValueUnHashedPassword = 'testPassword1*'
 const stubHashedPassword = "c67100c65e3ab96647156d991a6790ed6fd7d47c2585d0f7441ecf5931a66931"
-const stubValue = {
-    id: crypto.randomUUID(),
-    userName: "username",
-    email: "email@email.com",
-    companyId: crypto.randomUUID(),
-    password: crypto.randomUUID(),
-    role: constants.roles.admin,
-    password: stubHashedPassword,
-    createdAt:new Date(),
-    updatedAt:new Date(),
-};
-
 
 describe("UserRepository", function() {
     let sequelizeStubCreate;
     let sequelizeStubGetAll;
     let sequelizeStubFindOne;
     let sandbox;
+    let stubValue, companyValue;
     
     beforeEach(function () {
+        companyValue = {
+            id: crypto.randomUUID(),
+            name: crypto.randomBytes(4).toString('hex'),
+            apiKey: crypto.randomUUID(),
+        };
+
+        stubValue = {
+            id: crypto.randomUUID(),
+            name: crypto.randomBytes(4).toString('hex'),
+            username: crypto.randomBytes(4).toString('hex'),
+            userName: crypto.randomBytes(4).toString('hex'),
+            email: `${crypto.randomBytes(4).toString('hex')}@${crypto.randomBytes(4).toString('hex')}.com`,
+            password: stubHashedPassword,
+            companyId: companyValue.id,
+            companyName: companyValue.name,
+            role: constants.roles.admin,
+            createdAt:new Date(),
+            updatedAt:new Date(),
+        };
         sandbox = sinon.createSandbox();
         sequelizeStubCreate = sandbox.stub(db.user, 'create').resolves(stubValue);
         sequelizeStubGetAll = sandbox.stub(db.user, 'findAll').resolves([stubValue]);

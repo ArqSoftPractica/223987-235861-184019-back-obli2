@@ -13,18 +13,6 @@ const RestError = require('../src/controllers/rest-error')
 const stubValueUnHashedPassword = 'testPassword1*'
 const stubHashedPassword = "c67100c65e3ab96647156d991a6790ed6fd7d47c2585d0f7441ecf5931a66931"
 
-const userStub = {
-    id: crypto.randomUUID(),
-    userName: "username",
-    email: "thisIsATestEmail@email.com",
-    companyId: crypto.randomUUID(),
-    password: crypto.randomUUID(),
-    role: constants.roles.admin,
-    password: stubHashedPassword,
-    createdAt:new Date(),
-    updatedAt:new Date(),
-};
-
 describe('Login tests', () => {
     let sandbox;
     let next;
@@ -32,8 +20,30 @@ describe('Login tests', () => {
     let userRepository;
     let companyRepository;
     let getUserByEmailPasswordStub;
+    let userStub;
+    let companyValue;
     
     beforeEach(function () {
+        companyValue = {
+            id: crypto.randomUUID(),
+            name: crypto.randomBytes(4).toString('hex'),
+            apiKey: crypto.randomUUID(),
+        };
+
+        userStub = {
+            id: crypto.randomUUID(),
+            name: crypto.randomBytes(4).toString('hex'),
+            username: crypto.randomBytes(4).toString('hex'),
+            userName: crypto.randomBytes(4).toString('hex'),
+            email: `${crypto.randomBytes(4).toString('hex')}@${crypto.randomBytes(4).toString('hex')}.com`,
+            password: stubHashedPassword,
+            companyId: companyValue.id,
+            companyName: companyValue.name,
+            role: constants.roles.admin,
+            createdAt:new Date(),
+            updatedAt:new Date(),
+        };
+
         req = { body: {email: "some email", password: "testpassword*"} };
         res = { json: sinon.stub() };
         next = sinon.stub();
