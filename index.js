@@ -15,6 +15,7 @@ const sale = require('./src/routes/sale');
 const salesReport = require('./src/routes/saleReport');
 const purchase = require('./src/routes/purchase');
 const health = require('./src/routes/health');
+const reports = require('./src/routes/reports');
 
 var salesReportQueue = require("./src/service/sales-bull-queue-service");
 var productEventNotification = require("./src/service/product-event-notification");
@@ -30,6 +31,7 @@ app.use(purchase)
 app.use(sale)
 app.use(salesReport)
 app.use(health)
+app.use(reports)
 
 dbconnection.sequelize.sync()
   .then(() => {

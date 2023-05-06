@@ -54,6 +54,13 @@ module.exports = class SaleReportRepository {
         });
     }
 
+    async getAllSalesReport(companyId) {
+      return await SaleReport.findAll({ 
+          where: { companyId: companyId, },
+          order: [['totalSales', 'DESC']]
+      });
+  }
+
     async getAll() {
       return await SaleReport.findAll();
   }
