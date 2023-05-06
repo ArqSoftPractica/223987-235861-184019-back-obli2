@@ -1,3 +1,4 @@
+require('dotenv').config({ path: `${__dirname}/.env.${process.env.NODE_ENV}` });
 const express   = require('express');
 const Router    = express.Router();
 const RestError = require('./rest-error');
@@ -6,6 +7,9 @@ const CompanyRepository = require('../repositories/company-repository');
 const ProductRepositroy = require('../repositories/product-repository');
 const ProductPurchaseRepository = require('../repositories/productPurchase-repository');
 const ProviderRepository = require('../repositories/provider-repository');
+const Bull = require('bull');
+const {notificationType} = require('../constants')
+var logger = require("../logger/systemLogger")
 
 module.exports = class purchaseController {
     constructor() {
@@ -14,6 +18,7 @@ module.exports = class purchaseController {
         this.productRepository = new ProductRepositroy();
         this.productPurchaseRepository = new ProductPurchaseRepository();
         this.providerRepository = new ProviderRepository();
+        this.productEventNotification = new Bull("product-event-notification", process.env.REDIS_URL);
     }
 
     async createPurchase(req, res, next) {
@@ -58,6 +63,18 @@ module.exports = class purchaseController {
                         createdAt: purchasCreated.createdAt,
                         productsPurchased: productsPurchased,
                     }
+
+                    try {
+                        this.productEventNotification.add(
+                            {
+                                notificationType: notificationType.productBought,
+                                productsForEvent: productsPurchased
+                            }
+                        );
+                    } catch (err) {
+                        logger.logError("Error sendign product-event-notification", err)
+                    }
+
                     let addingProductsToStock = await this.productRepository.changeProductsStock(req.body.productsPurchased, true)
                     res.json(allPurchaseData);
                 } catch (err) {

@@ -1,4 +1,4 @@
-require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
+require('dotenv').config({ path: `${__dirname}/.env.${process.env.NODE_ENV}` });
 const express   = require('express');
 const Router    = express.Router();
 const RestError = require('./rest-error');
@@ -7,6 +7,8 @@ const SaleRepository = require('../repositories/sale-repository');
 const ProductRepositroy = require('../repositories/product-repository');
 const ProductSaleRepository = require('../repositories/productSale-repository');
 const CompanyRepository = require('../repositories/company-repository');
+const {notificationType} = require('../constants')
+var logger = require("../logger/systemLogger")
 
 module.exports = class saleController {
     constructor() {
@@ -15,6 +17,7 @@ module.exports = class saleController {
         this.productSaleRepository = new ProductSaleRepository();
         this.comanyRepository = new CompanyRepository();
         this.salesQueue = new Bull("sale-queue", process.env.REDIS_URL);
+        this.productEventNotification = new Bull("product-event-notification", process.env.REDIS_URL);
     }
 
     async createSale(req, res, next) {
@@ -53,7 +56,17 @@ module.exports = class saleController {
                     try {
                         this.salesQueue.add(productsSold);
                     } catch (err) {
-                        console.error(err)
+                        logger.logError("Error sendign salesQueue", err)
+                    }
+                    try {
+                        this.productEventNotification.add(
+                            {
+                                notificationType: notificationType.productSold,
+                                productsForEvent: productsSold
+                            }
+                        );
+                    } catch (err) {
+                        logger.logError("Error sendign product-event-notification", err)
                     }
 
                     res.json(allSaleData);

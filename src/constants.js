@@ -8,4 +8,9 @@ const roles = {
     test: 'TEST',
 };
 
-module.exports = { roles };
+const notificationType = {
+    productBought: 'PRODUCT_BOUGHT',
+    productSold: 'PRODUCT_SOLD',
+};
+
+module.exports = { roles, notificationType };

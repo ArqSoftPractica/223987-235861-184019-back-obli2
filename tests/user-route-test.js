@@ -6,7 +6,7 @@ const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 chai.should();
 const constants = require('../src/constants')
-require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
+require('dotenv').config({ path: `${__dirname}/.env.${process.env.NODE_ENV}` });
 const server = require('../index')
 
 describe('User Routes Test', function() {
