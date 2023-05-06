@@ -9,7 +9,7 @@ module.exports = class CompanyRepository {
     }
     
     async deleteCompany(companyName) {
-        return await Company.destroy({ name: companyName});
+        return await Company.destroy({ where: { name: companyName }});
     }
 
     async getCompanyByName(companyName) {

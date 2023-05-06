@@ -3,7 +3,7 @@ const express = require('express');
 var cors = require('cors')
 const app = express();
 const RestError = require('./src/controllers/rest-error')
-require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
+require('dotenv').config({ path: `${__dirname}/.env.${process.env.NODE_ENV}` });
 
 app.use(express.json());
 const dbconnection  = require('./src/db/connection/connection');

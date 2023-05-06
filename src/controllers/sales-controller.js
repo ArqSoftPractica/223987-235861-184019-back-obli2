@@ -1,4 +1,4 @@
-require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
+require('dotenv').config({ path: `${__dirname}/.env.${process.env.NODE_ENV}` });
 const express   = require('express');
 const Router    = express.Router();
 const RestError = require('./rest-error');
