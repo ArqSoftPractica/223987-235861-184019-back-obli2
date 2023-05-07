@@ -1,26 +1,27 @@
 const db = require('../db/connection/connection')
-const Product = db.product
 const ProductSubscription = db.productSubscription
 const User = db.user
 
 module.exports = class ProductSubscriptionRepository {
-    async createProductSubscription(productId, userId) {
-        const productSubscription = await ProductSubscription.create({
+    async upsertProductSubscription(
+        productId, 
+        userId, 
+        willSubscribeProductBought,
+        willSubscribeProductSold, 
+        willSubscribeNoStock
+    ) {
+        const productSubscription = await ProductSubscription.upsert({
             productId: productId,
-            userId: userId
+            userId: userId,
+            productBought: willSubscribeProductBought,
+            productSold: willSubscribeProductSold,
+            noStock: willSubscribeNoStock,
         });
-        return productSubscription
-    }
-
-    async deleteProductSubscription(productId, userId) {
-        const productSubscription = await ProductSubscription.destroy({
-            where: {
-                productId: productId,
-                userId: userId
-            }
-        });
-        
-        return productSubscription
+        if (productSubscription && Object.values(productSubscription).length > 0 && productSubscription[0].dataValues) {
+            return productSubscription[0].dataValues
+        } else {
+            throw Error('Could not upsert Product subscription in database')
+        }
     }
 
     async getProductSubscription(productId, userId) {
@@ -31,10 +32,11 @@ module.exports = class ProductSubscriptionRepository {
         return productSubscription
     }
 
-    async getAllUsersSubscribedTo(productId) {
-        const allSubscribers = await ProductSubscription.findAll({where:{
-            productId: productId
-        }});
+    async getAllUsersSubscribedTo(productId, notificationType) {
+        const whereClause = { productId: productId }
+        whereClause[notificationType] = true
+
+        const allSubscribers = await ProductSubscription.findAll({where:whereClause});
         if (allSubscribers && Object.values(allSubscribers).length > 0) {
             const userIds = Object.values(allSubscribers).map(prodSub => prodSub.userId)
             return await User.findAll({

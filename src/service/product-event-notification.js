@@ -76,28 +76,36 @@ module.exports.initProductEventNotification = async function () {
       if (job.data) {
             try {
                 logger.logInfo('product-event-notification: Will process job with data: ' + job.data)
-                switch (job.data.notificationType) {
-                    case notificationType.productSold:
-                    case notificationType.productBought:
-                        Object.values(job.data.productsForEvent).forEach(
-                            async productEvent => {
+                const notificationTypeFromQueue = 
+                        Object.keys(notificationType)[Object.values(notificationType).indexOf(job.data.notificationType)]
+                if (notificationTypeFromQueue) {
+                    Object.values(job.data.productsForEvent).forEach(
+                        async productEvent => {
+                            if (productEvent && productEvent.productId && productEvent.companyId) {
                                 try {
-                                    let allSubscribers = await productSubscriptionRepository.getAllUsersSubscribedTo(productEvent.productId)
+                                    let allSubscribers = await productSubscriptionRepository.getAllUsersSubscribedTo(
+                                        productEvent.productId, 
+                                        notificationTypeFromQueue
+                                    )
                                     let product = await productRepository.getProduct(productEvent.productId, productEvent.companyId)
                                     let company = await companyRepository.getCompany(productEvent.companyId)
-    
-                                    notifyProductEvent(allSubscribers, job.data.notificationType, productEvent.productId, product.name, company.name, new Date(productEvent.createdAt), productEvent)
+                                    if (Object.values(allSubscribers).length > 0) {
+                                        notifyProductEvent(allSubscribers, job.data.notificationType, productEvent.productId, product.name, company.name, new Date(productEvent.createdAt), productEvent)
+                                    } else {
+                                        logger.logInfo(`NO subscribers for ${job.data.notificationType}: ${productEvent.productId} id of Item: ${productEvent.productId}`)    
+                                    }
                                 } catch (err) {
                                     logger.logError(`Could not notify users from ${job.data.notificationType}: ${productEvent.productId} id of Item: ${productEvent.productId}`)
                                 }
+                            } else {
+                                logger.logError('Errror in product-event-notification notification type: ' + job.notificationType)
                             }
-                        )
-                        done();  
-                        break;
-                    default:
-                        logger.logError('Errror in product-event-notification notification type: ' + job.notificationType)
-                        done(); 
-                    break;
+                        }
+                    )
+                    done();
+                } else {
+                    logger.logError('Errror in product-event-notification notification type: ' + job.notificationType)
+                    done(); 
                 }
             } catch (err) {
                 logger.logInfo('product-event-notification:Error when trying to process data in job...' + err.message)

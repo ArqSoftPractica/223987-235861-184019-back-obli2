@@ -78,30 +78,32 @@ module.exports = class productController {
         }
     }
 
-    async subscribeUserToProduct(req, res, next) {
+    async upsertProductSubscription(req, res, next) {
         try {
             const productId = req.params.id;
             const userId = req.user.id;
-            await this.productSubscriptionRepository.createProductSubscription(productId, userId);
+            const prodSubscription = await this.productSubscriptionRepository.upsertProductSubscription(
+                productId, 
+                userId, 
+                req.body.productBought ?? false,
+                req.body.productSold ?? false,
+                req.body.noStock ?? false,
+            );
             
-            res.status(204);
-            res.json();
+            res.status(200);
+            res.json(prodSubscription);
         } catch (err) {
             this.handleRepoError(err, next)
         }
     }
 
-    async getIfSuscribedToProduct(req, res, next) {
+    async getProductSubscription(req, res, next) {
         try {
             const productId = req.params.id;
             const userId = req.user.id;
             const productSubscription = await this.productSubscriptionRepository.getProductSubscription(productId, userId);
-            if (productSubscription) {
-                res.status(204);
-                return res.json();
-            } else {
-                return next(new RestError("No subscription found", 404));
-            }
+            res.status(productSubscription);
+            return res.json();
         } catch (err) {
             this.handleRepoError(err, next)
         }
