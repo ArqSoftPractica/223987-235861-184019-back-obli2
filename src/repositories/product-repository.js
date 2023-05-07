@@ -70,11 +70,9 @@ module.exports = class ProductRepository {
                     correctQuantity= -item.productQuantity
                 }
 
-                let whereCondition;
-                if (addToStock) {
-                    whereCondition = { id: item.id, isActive: true}
-                } else {
-                    whereCondition = { id: item.id, stock: { [db.Sequelize.Op.gte]: item.productQuantity }, isActive: true}
+                let whereCondition = { id: item.id, isActive: true};
+                if (!addToStock) {
+                    whereCondition.stock = { [db.Sequelize.Op.gte]: item.productQuantity }
                 }
 
                 const updatedItems = await Product.update(
@@ -84,6 +82,7 @@ module.exports = class ProductRepository {
                         transaction: t 
                     },
                 )
+                
                 if (updatedItems == 0) {
                     let productToChangeQuantity = await Product.findOne({ where: { id: item.id } });
                     if (!productToChangeQuantity) {
