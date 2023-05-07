@@ -9,8 +9,9 @@ const roles = {
 };
 
 const notificationType = {
-    productBought: 'PRODUCT_BOUGHT',
-    productSold: 'PRODUCT_SOLD',
+    productBought: 'Product Bought',
+    productSold: 'Product Sold',
+    noStock: 'No More Stock',
 };
 
 module.exports = { roles, notificationType };

@@ -9,6 +9,8 @@ const ProductSaleRepository = require('../repositories/productSale-repository');
 const CompanyRepository = require('../repositories/company-repository');
 const {notificationType} = require('../constants')
 var logger = require("../logger/systemLogger")
+const schedule = require('node-schedule');
+const moment = require('moment-timezone');
 
 module.exports = class saleController {
     constructor() {
@@ -19,6 +21,57 @@ module.exports = class saleController {
         this.salesQueue = new Bull("sale-queue", process.env.REDIS_URL);
         this.productEventNotification = new Bull("product-event-notification", process.env.REDIS_URL);
     }
+
+    async executeSaleJob(body, companyId) {
+        try {
+            await this.executeSale(body, companyId)
+        } catch (err) {
+            logger.logError('Error In Scheduled Sale execution', err)
+        }
+    }
+
+    executeSale = async (saleBody, companyId) => {
+        try {
+            let saleCreated = await this.saleRepository.createSale(saleBody);
+            try {
+                let productsSold = await this.productSaleRepository.createProductsSale(saleBody.productsSold, companyId, saleCreated.id);            
+                let allSaleData = {
+                    id: saleCreated.id,
+                    date: saleCreated.date,
+                    companyId: saleCreated.companyId,
+                    totalCost: saleCreated.totalCost,
+                    clientName: saleCreated.clientName,
+                    updatedAt: saleCreated.updatedAt,
+                    createdAt: saleCreated.createdAt,
+                    productsSold: productsSold,
+                }
+                try {
+                    this.salesQueue.add(productsSold);
+                } catch (err) {
+                    logger.logError("Error sendign salesQueue", err)
+                }
+                try {
+                    this.productEventNotification.add(
+                        {
+                            notificationType: notificationType.productSold,
+                            productsForEvent: productsSold
+                        }
+                    );
+                } catch (err) {
+                    logger.logError("Error sendign product-event-notification", err)
+                }
+    
+                return allSaleData
+            } catch (err) {
+                let saleDeleted = await this.saleRepository.deleteSale(saleCreated.id);
+                let addProductStockBack = await this.productRepository.changeProductsStock(saleBody.productsSold, true)
+                throw err   
+            }
+        } catch (err) {
+            let addProductStockBack = await this.productRepository.changeProductsStock(saleBody.productsSold, true)
+            throw err
+        }
+    };
 
     async createSale(req, res, next) {
         try{
@@ -39,45 +92,29 @@ module.exports = class saleController {
             }
 
             let removingProductsFromStock = await this.productRepository.changeProductsStock(req.body.productsSold, false)
-            try {
-                let saleCreated = await this.saleRepository.createSale(req.body);
-                try {
-                    let productsSold = await this.productSaleRepository.createProductsSale(req.body.productsSold, company.id, saleCreated.id);            
-                    let allSaleData = {
-                        id: saleCreated.id,
-                        date: saleCreated.date,
-                        companyId: saleCreated.companyId,
-                        totalCost: saleCreated.totalCost,
-                        clientName: saleCreated.clientName,
-                        updatedAt: saleCreated.updatedAt,
-                        createdAt: saleCreated.createdAt,
-                        productsSold: productsSold,
-                    }
-                    try {
-                        this.salesQueue.add(productsSold);
-                    } catch (err) {
-                        logger.logError("Error sendign salesQueue", err)
-                    }
-                    try {
-                        this.productEventNotification.add(
-                            {
-                                notificationType: notificationType.productSold,
-                                productsForEvent: productsSold
-                            }
-                        );
-                    } catch (err) {
-                        logger.logError("Error sendign product-event-notification", err)
-                    }
-
-                    res.json(allSaleData);
-                } catch (err) {
-                    let saleDeleted = await this.saleRepository.deleteSale(saleCreated.id);
-                    let addProductStockBack = await this.productRepository.changeProductsStock(req.body.productsSold, true)
-                    this.handleRepoError(err, next)    
+            if (req.query.scheduledFor) {
+                const parsedScheduledFor = Date.parse(req.query.scheduledFor);
+                if (req.query.timeZone && moment.tz.zone(req.query.timeZone) == null) {
+                    throw Error('Incorrect timezone')
                 }
-            } catch (err) {
-                let addProductStockBack = await this.productRepository.changeProductsStock(req.body.productsSold, true)
-                this.handleRepoError(err, next)
+
+                if (isNaN(parsedScheduledFor)) {
+                    throw Error('Incorrect date format for scheduling a sale')
+                } else {
+                    const nowDate = new Date();
+                    const dateToSchedule = moment.tz(req.query.scheduledFor, req.query.timeZone ?? 'America/Montevideo').toDate();
+                    if (nowDate > dateToSchedule) {
+                        throw Error('Date cannot be in the past')
+                    }
+                    //TODO: save this data in db in case service goes down, it can get all jobs rescheduled back again
+                    schedule.scheduleJob(dateToSchedule, () => this.executeSaleJob(req.body, company.id));
+                    
+                    res.status(204);
+                    return res.json();   
+                }
+            } else {
+                let allSaleData = await this.executeSale(req.body, company.id);
+                return res.json(allSaleData);
             }
         } catch (err) {
             this.handleRepoError(err, next)
