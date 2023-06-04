@@ -3,16 +3,6 @@ const ProductSale = db.productSale
 const Product = db.product
 
 module.exports = class ProductSaleRepository {
-    async createProductSale(productData, companyId) {
-        const productSale = await ProductSale.create({
-            productId: productData.id,
-            productCost: productData.productCost,
-            productQuantity: productData.productQuantity,
-            companyId: companyId
-        });
-        return productSale
-    }
-
     async createProductsSale(productsData, companyId, saleId) {
         const newList = [];
         for (let i = 0; i < productsData.length; i++) {
@@ -36,10 +26,6 @@ module.exports = class ProductSaleRepository {
         })
 
         return productsSale
-    }
-
-    async getProductsSale(productSaleId) {
-        return await ProductSale.findAll({ where: { id: productSaleId } });
     }
 
     async getProductSalesByCompany(companyId) {

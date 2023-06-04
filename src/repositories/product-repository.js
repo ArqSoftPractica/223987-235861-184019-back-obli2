@@ -24,6 +24,17 @@ module.exports = class ProductRepository {
         return await Product.findOne({ where: queryParamsDb });
     }
 
+    async getProductsWithZeroStockFrom(companyId, productIdsStockChanged) {
+        let queryParamsDb = { 
+            stock : { [db.Sequelize.Op.eq]: 0},
+            id: { [db.Sequelize.Op.in]: productIdsStockChanged},
+            isActive: true,
+            companyId: companyId
+        };
+
+        return await Product.findAll({ where: queryParamsDb });
+    }
+
     async getProducts(queryParams, companyId) {
         let queryParamsDb = {};
         
@@ -34,6 +45,11 @@ module.exports = class ProductRepository {
         if (queryParams['isActive'] != undefined) {
             queryParamsDb['isActive'] = queryParams['isActive']
         }
+        
+        if (queryParams.stock != undefined) {
+            queryParamsDb.stock = queryParams.stock
+        }
+
         return await Product.findAll({ where: queryParamsDb });
     }
 

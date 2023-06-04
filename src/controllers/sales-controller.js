@@ -50,6 +50,7 @@ module.exports = class saleController {
                 } catch (err) {
                     logger.logError("Error sendign salesQueue", err)
                 }
+                
                 try {
                     this.productEventNotification.add(
                         {
@@ -109,16 +110,47 @@ module.exports = class saleController {
                     //TODO: save this data in db in case service goes down, it can get all jobs rescheduled back again
                     schedule.scheduleJob(dateToSchedule, () => this.executeSaleJob(req.body, company.id));
                     
+                    this.notifyStockZeroIfApplicable(req.body.productsSold, company.id)
+                    
                     res.status(204);
                     return res.json();   
                 }
             } else {
                 let allSaleData = await this.executeSale(req.body, company.id);
+
+                this.notifyStockZeroIfApplicable(req.body.productsSold, company.id)
+
                 return res.json(allSaleData);
             }
         } catch (err) {
             this.handleRepoError(err, next)
         }
+    }
+
+    async notifyStockZeroIfApplicable(productsSold, companyId) {
+            const productIdsStockChanged = Object.values(productsSold).map(item => item.id)
+
+            let productsAtZero = await this.productRepository.getProductsWithZeroStockFrom(
+                companyId,
+                productIdsStockChanged
+            )
+
+            if (productsAtZero && productsAtZero.length > 0) {
+                const prodForEvent = Object.values(productsAtZero).map(item =>  
+                    ({
+                        productId: item.id,
+                        companyId: item.companyId
+                    })
+                )
+                try {
+                    this.productEventNotification.add({
+                        notificationType: notificationType.noStock,
+                        productsForEvent: prodForEvent
+                    });
+                } catch (err) {
+                    logger.logError("Error sendign product-no-stock-notification", err)
+                }
+            }
     }
 
     async getSale(req, res, next) {
