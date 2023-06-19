@@ -2,9 +2,9 @@ require('dotenv').config({ path: `${__dirname}/.env.${process.env.NODE_ENV}` });
 const express   = require('express');
 const Router    = express.Router();
 const RestError = require('./rest-error');
-const ProductPurchaseRepository = require('../repositories/productPurchase-repository');
 var logger = require("../logger/systemLogger");
 const SaleReportRepository = require('../repositories/saleReport-repository');
+const PurchaseReportRepository = require('../repositories/purchaseReport-repository');
 const sendinblueApiKey = process.env.SENDIN_BLUE_API_KEY;
 const { createCanvas, Canvas } = require('canvas');
 const Chart = require('chart.js');
@@ -13,8 +13,8 @@ const { default: axios } = require('axios');
 
 module.exports = class purchaseController {
     constructor() {
-        this.productPurchaseRepository = new ProductPurchaseRepository();
         this.saleReportRepository = new SaleReportRepository();
+        this.purchaseReportRepository = new PurchaseReportRepository();
     }
 
     async sendReportEmailForUser(req, res, next) {
@@ -28,15 +28,14 @@ module.exports = class purchaseController {
             }
 
             let salesReport = await this.saleReportRepository.getTopSalesReport(req.params.companyId);
-            let productPurchases = await this.saleReportRepository.getTopSalesReport(req.params.companyId);
-
-            await this.generateSendEmailChartForSales(salesReport, req.user.email, res, next)
+            let purchasesReport= await this.purchaseReportRepository.getTopPurchasesReport(req.params.companyId);
+            await this.generateSendEmailChartForSales(salesReport, purchasesReport, req.user.email, res, next)
         } catch (err) {
             this.handleRepoError(err, next)
         }
     }
 
-    async generateSendEmailChartForSales(productSales, email, res, next) {
+    async generateSendEmailChartForSales(productSales, purchasesReport, email, res, next) {
         const width = 400; // Width of the chart image
         const height = 400; // Height of the chart image
         const canvas = createCanvas(width, height);
@@ -50,9 +49,15 @@ module.exports = class purchaseController {
                 product.productId
         )
         const values = productSales.map((product) => product.totalSales)
+
+        const labelsPurchases = purchasesReport.map((product) => 
+                product.productId
+        )
+        const valuesPurchases = purchasesReport.map((product) => product.totalPurchases)
         const randomNum = () => Math.floor(Math.random() * (235 - 52 + 1) + 52);
         const randomRGB = () => `rgb(${randomNum()}, ${randomNum()}, ${randomNum()})`;
         const colors = values.map(() => randomRGB())
+        const colorsPurchases = valuesPurchases.map(() => randomRGB())
     
         const chartData = {
             labels: labels,
@@ -62,6 +67,18 @@ module.exports = class purchaseController {
                     data: values,
                     backgroundColor: colors,
                     borderColor: colors,
+                }
+            ]
+        };
+
+        const chartDataPurchases = {
+            labels: labelsPurchases,
+            datasets: [
+                {
+                    label: '',
+                    data: valuesPurchases,
+                    backgroundColor: colorsPurchases,
+                    borderColor: colorsPurchases,
                 }
             ]
         };
@@ -76,11 +93,18 @@ module.exports = class purchaseController {
             data: chartData,
             options: chartOptions
         };
+
+        const chartConfigurationPurchases = {
+            type: 'pie',
+            data: chartDataPurchases,
+            options: chartOptions
+        };
     
         // Convert the chart to HTML
         
         const image = (await chartJSNodeCanvas.renderToBuffer(chartConfiguration)).toString('base64');
-        
+        const imagePurchases = (await chartJSNodeCanvas.renderToBuffer(chartConfigurationPurchases)).toString('base64');
+
             
         // Construct the email template with the chart
         const emailTemplate = `<html><body><h1>Chart Example</h1><p>...</p></body></html>`;
@@ -92,12 +116,16 @@ module.exports = class purchaseController {
                 name: "Company 1",
                 email: 'cuentaincognita2016@gmail.com' 
             },
-            subject: 'Sales Chart!',
+            subject: 'Sales and Purchases Chart!',
             htmlContent: emailTemplate,
             attachment: [
                 { 
                     content: image, 
-                    name: 'mypng.png' 
+                    name: 'sales.png' 
+                },
+                { 
+                    content: imagePurchases, 
+                    name: 'purchases.png' 
                 }
             ]
         };
