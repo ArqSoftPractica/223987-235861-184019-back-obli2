@@ -89,7 +89,6 @@ module.exports = class productController {
                 req.body.productSold ?? false,
                 req.body.noStock ?? false,
             );
-            
             res.status(200);
             res.json(prodSubscription);
         } catch (err) {
@@ -102,8 +101,8 @@ module.exports = class productController {
             const productId = req.params.id;
             const userId = req.user.id;
             const productSubscription = await this.productSubscriptionRepository.getProductSubscription(productId, userId);
-            res.status(productSubscription);
-            return res.json();
+            res.status(200);
+            return res.json(productSubscription);
         } catch (err) {
             this.handleRepoError(err, next)
         }
