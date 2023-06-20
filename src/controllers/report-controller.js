@@ -28,7 +28,7 @@ module.exports = class purchaseController {
             }
 
             let salesReport = await this.saleReportRepository.getAllSalesReport(req.params.companyId);
-            let purchasesReport= await this.purchaseReportRepository.getAllPurchases(req.params.companyId);
+            let purchasesReport= await this.purchaseReportRepository.getAllPurchasesReport(req.params.companyId);
             await this.generateSendEmailChartForSales(salesReport, purchasesReport, req.user.email, res, next)
         } catch (err) {
             this.handleRepoError(err, next)

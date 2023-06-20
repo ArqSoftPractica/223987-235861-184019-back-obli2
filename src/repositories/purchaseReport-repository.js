@@ -46,7 +46,7 @@ module.exports = class PurchaseReportRepository {
         })
   }
 
-    async getTopPurchases(companyId, limit) {
+    async getTopPurchasesReport(companyId, limit) {
         return await PurchaseReport.findAll({ 
             where: { companyId: companyId, },
             order: [['totalPurchases', 'DESC']],
@@ -54,7 +54,7 @@ module.exports = class PurchaseReportRepository {
         });
     }
 
-    async getAllPurchases(companyId) {
+    async getAllPurchasesReport(companyId) {
       return await PurchaseReport.findAll({ 
           where: { companyId: companyId, },
           order: [['totalPurchases', 'DESC']]
