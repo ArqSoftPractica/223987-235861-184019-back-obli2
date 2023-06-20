@@ -27,8 +27,8 @@ module.exports = class purchaseController {
                 return next(new RestError('Email not registered for user', 400));    
             }
 
-            let salesReport = await this.saleReportRepository.getTopSalesReport(req.params.companyId);
-            let purchasesReport= await this.purchaseReportRepository.getTopPurchasesReport(req.params.companyId);
+            let salesReport = await this.saleReportRepository.getAllSalesReport(req.params.companyId);
+            let purchasesReport= await this.purchaseReportRepository.getAllPurchases(req.params.companyId);
             await this.generateSendEmailChartForSales(salesReport, purchasesReport, req.user.email, res, next)
         } catch (err) {
             this.handleRepoError(err, next)
