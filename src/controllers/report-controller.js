@@ -107,7 +107,7 @@ module.exports = class purchaseController {
 
             
         // Construct the email template with the chart
-        const emailTemplate = `<html><body><h1>Chart Example</h1><p>...</p></body></html>`;
+        const emailTemplate = `<html><body><h1>Reporte de Ventas y Compras por Producto</h1><p>Hola!<br><br>Encuentra adjunto el reporte de ventas y compras por producto de su empresa.<br><br>Saluda Atentamente,<br>Nuestro Equipo</p></body></html>`;
     
         // Send the email using Sendinblue 
         let data = {
