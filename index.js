@@ -19,6 +19,7 @@ const reports = require('./src/routes/reports');
 
 var salesReportQueue = require("./src/service/sales-bull-queue-service");
 var productEventNotification = require("./src/service/product-event-notification");
+var purchaseReportQueue = require("./src/service/purchases-bull-queue-service");
 
 var logger = require("./src/logger/systemLogger")
 
@@ -59,6 +60,10 @@ const server = app.listen(process.env.PORT ?? 3000, function(){
 
 (async() => {
   await salesReportQueue.initSalesReportQueue();
+})();
+
+(async() => {
+  await purchaseReportQueue.initPurchasesReportQueue();
 })();
 
 (async() => {

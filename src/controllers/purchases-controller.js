@@ -19,6 +19,7 @@ module.exports = class purchaseController {
         this.productPurchaseRepository = new ProductPurchaseRepository();
         this.providerRepository = new ProviderRepository();
         this.productEventNotification = new Bull("product-event-notification", process.env.REDIS_URL);
+        this.productPurchasesReportQueue = new Bull("purchases-report-queue", process.env.REDIS_URL);
     }
 
     async createPurchase(req, res, next) {
@@ -72,7 +73,13 @@ module.exports = class purchaseController {
                             }
                         );
                     } catch (err) {
-                        logger.logError("Error sendign product-event-notification", err)
+                        logger.logError("Error sending product-event-notification", err)
+                    }
+                    
+                    try {
+                        this.productPurchasesReportQueue.add(productsPurchased);
+                    } catch (err) {
+                        logger.logError("Error sending productPurchasesReportQueue", err)
                     }
 
                     let addingProductsToStock = await this.productRepository.changeProductsStock(req.body.productsPurchased, true)

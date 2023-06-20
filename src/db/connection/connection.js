@@ -12,6 +12,7 @@ const ProductPurchase = require('../models/productPurchase')
 const Sale = require('../models/sale')
 const ProductSale = require('../models/productSale')
 const SaleReport = require('../models/saleReport')
+const PurchaseReport = require('../models/purchaseReport')
 const ProductSubscription = require('../models/productSubscription')
 const logger = require('../../logger/systemLogger')
 
@@ -75,5 +76,6 @@ db.productPurchase = ProductPurchase(sequelize, DataTypes, db.product, db.purcha
 db.sale = Sale(sequelize, DataTypes, db.company);
 db.productSale = ProductSale(sequelize, DataTypes, db.product, db.sale, db.company);
 db.saleReport = SaleReport(sequelize, DataTypes, db.company, db.product);
+db.purchaseReport = PurchaseReport(sequelize, DataTypes, db.company, db.product);
 db.productSubscription = ProductSubscription(sequelize, DataTypes, db.product, db.user)
 module.exports = db;
